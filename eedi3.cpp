@@ -54,15 +54,15 @@ static void VS_CC eedi3Init(VSMap *in, VSMap *out, void **instanceData, VSNode *
 }
 
 
-static void interpLineFP(const uint8_t *srcp, const int width, const int pitch,
+static void interpLineFP(const uint16_t *srcp, const int width, const int pitch,
                          const float alpha, const float beta, const float gamma, const int nrad,
-                         const int mdis, float *temp, uint8_t *dstp, int *dmap, const int ucubic,
+                         const int mdis, float *temp, uint16_t *dstp, int *dmap, const int ucubic,
                          const int cost3)
 {
-    const uint8_t *src3p = srcp - 3 * pitch;
-    const uint8_t *src1p = srcp - 1 * pitch;
-    const uint8_t *src1n = srcp + 1 * pitch;
-    const uint8_t *src3n = srcp + 3 * pitch;
+    const uint16_t *src3p = srcp - 3 * pitch;
+    const uint16_t *src1p = srcp - 1 * pitch;
+    const uint16_t *src1n = srcp + 1 * pitch;
+    const uint16_t *src3n = srcp + 3 * pitch;
     const int tpitch = mdis * 2 + 1;
     float *ccosts = temp;
     float *pcosts = ccosts + width * tpitch;
@@ -179,32 +179,32 @@ static void interpLineFP(const uint8_t *srcp, const int width, const int pitch,
 
         if(ucubic && x >= ad * 3 && x <= width - 1 - ad * 3)
             dstp[x] = VSMIN(VSMAX((36 * (src1p[x + dir] + src1n[x - dir]) -
-                               4 * (src3p[x + dir * 3] + src3n[x - dir * 3]) + 32) >> 6, 0), 255);
+                               4 * (src3p[x + dir * 3] + src3n[x - dir * 3]) + 32) >> 6, 0), 65535);
         else
             dstp[x] = (src1p[x + dir] + src1n[x - dir] + 1) >> 1;
     }
 }
 
 
-static void interpLineHP(const uint8_t *srcp, const int width, const int pitch,
+static void interpLineHP(const uint16_t *srcp, const int width, const int pitch,
                          const float alpha, const float beta, const float gamma, const int nrad,
-                         const int mdis, float *temp, uint8_t *dstp, int *dmap, const int ucubic,
+                         const int mdis, float *temp, uint16_t *dstp, int *dmap, const int ucubic,
                          const int cost3)
 {
-    const uint8_t *src3p = srcp - 3 * pitch;
-    const uint8_t *src1p = srcp - 1 * pitch;
-    const uint8_t *src1n = srcp + 1 * pitch;
-    const uint8_t *src3n = srcp + 3 * pitch;
+    const uint16_t *src3p = srcp - 3 * pitch;
+    const uint16_t *src1p = srcp - 1 * pitch;
+    const uint16_t *src1n = srcp + 1 * pitch;
+    const uint16_t *src3n = srcp + 3 * pitch;
     const int tpitch = mdis * 4 + 1;
     float *ccosts = temp;
     float *pcosts = ccosts + width * tpitch;
     int *pbackt = (int *)(pcosts + width * tpitch);
     int *fpath = pbackt + width * tpitch;
     // calculate half pel values
-    uint8_t *hp3p = (uint8_t *)fpath;
-    uint8_t *hp1p = hp3p + width;
-    uint8_t *hp1n = hp1p + width;
-    uint8_t *hp3n = hp1n + width;
+    uint16_t *hp3p = (uint16_t *)fpath;
+    uint16_t *hp1p = hp3p + width;
+    uint16_t *hp1n = hp1p + width;
+    uint16_t *hp3n = hp1n + width;
 
     int k, u, v, x;
 
@@ -215,10 +215,10 @@ static void interpLineHP(const uint8_t *srcp, const int width, const int pitch,
             hp1n[x] = (src1n[x] + src1n[x + 1] + 1) >> 1;
             hp3n[x] = (src3n[x] + src3n[x + 1] + 1) >> 1;
         } else {
-            hp3p[x] = VSMIN(VSMAX((36 * (src3p[x] + src3p[x + 1]) - 4 * (src3p[x - 1] + src3p[x + 2]) + 32) >> 6, 0), 255);
-            hp1p[x] = VSMIN(VSMAX((36 * (src1p[x] + src1p[x + 1]) - 4 * (src1p[x - 1] + src1p[x + 2]) + 32) >> 6, 0), 255);
-            hp1n[x] = VSMIN(VSMAX((36 * (src1n[x] + src1n[x + 1]) - 4 * (src1n[x - 1] + src1n[x + 2]) + 32) >> 6, 0), 255);
-            hp3n[x] = VSMIN(VSMAX((36 * (src3n[x] + src3n[x + 1]) - 4 * (src3n[x - 1] + src3n[x + 2]) + 32) >> 6, 0), 255);
+            hp3p[x] = VSMIN(VSMAX((36 * (src3p[x] + src3p[x + 1]) - 4 * (src3p[x - 1] + src3p[x + 2]) + 32) >> 6, 0), 65535);
+            hp1p[x] = VSMIN(VSMAX((36 * (src1p[x] + src1p[x + 1]) - 4 * (src1p[x - 1] + src1p[x + 2]) + 32) >> 6, 0), 65535);
+            hp1n[x] = VSMIN(VSMAX((36 * (src1n[x] + src1n[x + 1]) - 4 * (src1n[x - 1] + src1n[x + 2]) + 32) >> 6, 0), 65535);
+            hp3n[x] = VSMIN(VSMAX((36 * (src3n[x] + src3n[x + 1]) - 4 * (src3n[x - 1] + src3n[x + 2]) + 32) >> 6, 0), 65535);
         }
     }
 
@@ -358,7 +358,7 @@ static void interpLineHP(const uint8_t *srcp, const int width, const int pitch,
 
             if(ucubic && x >= ad * 3 && x <= width - 1 - ad * 3)
                 dstp[x] = VSMIN(VSMAX((36 * (src1p[x + d2] + src1n[x - d2]) -
-                                   4 * (src3p[x + d2 * 3] + src3n[x - d2 * 3]) + 32) >> 6, 0), 255);
+                                   4 * (src3p[x + d2 * 3] + src3n[x - d2 * 3]) + 32) >> 6, 0), 65535);
             else
                 dstp[x] = (src1p[x + d2] + src1n[x - d2] + 1) >> 1;
         } else {
@@ -373,7 +373,7 @@ static void interpLineHP(const uint8_t *srcp, const int width, const int pitch,
                 const int c1 = src1p[x + d20] + src1p[x + d21]; // should use cubic if ucubic=true
                 const int c2 = src1n[x - d20] + src1n[x - d21]; // should use cubic if ucubic=true
                 const int c3 = src3n[x - d30] + src3n[x - d31];
-                dstp[x] = VSMIN(VSMAX((36 * (c1 + c2) - 4 * (c0 + c3) + 64) >> 7, 0), 255);
+                dstp[x] = VSMIN(VSMAX((36 * (c1 + c2) - 4 * (c0 + c3) + 64) >> 7, 0), 65535);
             } else
                 dstp[x] = (src1p[x + d20] + src1p[x + d21] + src1n[x - d20] + src1n[x - d21] + 2) >> 2;
         }
@@ -392,26 +392,26 @@ static VSFrameRef *copyPad(const VSFrameRef *src, int fn, VSFrameContext *frameC
 
     if(!d->dh) {
         for(b = 0; b < d->vi.format->numPlanes; ++b)
-            vs_bitblt(vsapi->getWritePtr(srcPF, b) + vsapi->getStride(srcPF, b) * (4 + off) + 12,
-                      vsapi->getStride(srcPF, b) * 2,
-                      vsapi->getReadPtr(src, b) + vsapi->getStride(src, b)*off,
-                      vsapi->getStride(src, b) * 2,
+            vs_bitblt(vsapi->getWritePtr(srcPF, b) + (vsapi->getStride(srcPF, b)/2) * (4 + off) + 12,
+                      (vsapi->getStride(srcPF, b)/2) * 2,
+                      vsapi->getReadPtr(src, b) + (vsapi->getStride(src, b)/2)*off,
+                      (vsapi->getStride(src, b)/2) * 2,
                       vsapi->getFrameWidth(src, b) * d->vi.format->bytesPerSample,
                       vsapi->getFrameHeight(src, b) >> 1);
     } else {
         for(b = 0; b < d->vi.format->numPlanes; ++b)
-            vs_bitblt(vsapi->getWritePtr(srcPF, b) + vsapi->getStride(srcPF, b) * (4 + off) + 12,
-                      vsapi->getStride(srcPF, b) * 2,
+            vs_bitblt(vsapi->getWritePtr(srcPF, b) + (vsapi->getStride(srcPF, b)/2) * (4 + off) + 12,
+                      (vsapi->getStride(srcPF, b)/2) * 2,
                       vsapi->getReadPtr(src, b),
-                      vsapi->getStride(src, b),
+                      (vsapi->getStride(src, b)/2),
                       vsapi->getFrameWidth(src, b) * d->vi.format->bytesPerSample,
                       vsapi->getFrameHeight(src, b));
     }
 
     for(b = 0; b < d->vi.format->numPlanes; ++b) {
         // fixme, probably pads a bit too much with subsampled formats
-        uint8_t *dstp = vsapi->getWritePtr(srcPF, b);
-        const int dst_pitch = vsapi->getStride(srcPF, b);
+        uint16_t *dstp = reinterpret_cast <uint16_t *> (vsapi->getWritePtr(srcPF, b));
+        const int dst_pitch = (vsapi->getStride(srcPF, b)/2);
         const int height = vsapi->getFrameHeight(src, b) + 8;
         const int width = vsapi->getFrameWidth(src, b) + 24;
         dstp += (4 + off) * dst_pitch;
@@ -428,7 +428,7 @@ static VSFrameRef *copyPad(const VSFrameRef *src, int fn, VSFrameContext *frameC
             dstp += dst_pitch * 2;
         }
 
-        dstp = vsapi->getWritePtr(srcPF, b);
+        dstp = reinterpret_cast <uint16_t *> (vsapi->getWritePtr(srcPF, b));
 
         for(y = off; y < 4; y += 2)
             vs_bitblt(dstp + y * dst_pitch, dst_pitch,
@@ -505,7 +505,7 @@ static const VSFrameRef *VS_CC eedi3GetFrame(int n, int activationReason, void *
         }
 
         int *dmapa = NULL;
-        VS_ALIGNED_MALLOC((void **)&dmapa, vsapi->getStride(dst, 0)*vsapi->getFrameHeight(dst, 0)*sizeof(int), 16);
+        VS_ALIGNED_MALLOC((void **)&dmapa, (vsapi->getStride(dst, 0)/2)*vsapi->getFrameHeight(dst, 0)*sizeof(int), 16);
         if (!dmapa) {
             VS_ALIGNED_FREE(workspace);
             vsapi->setFilterError("EEDI3: Memory allocation failed", frameCtx);
@@ -521,12 +521,12 @@ static const VSFrameRef *VS_CC eedi3GetFrame(int n, int activationReason, void *
             if(!(d->planes & (1 << b)))
                 continue;
 
-            const uint8_t *srcp = vsapi->getReadPtr(srcPF, b);
-            const int spitch = vsapi->getStride(srcPF, b);
+            const uint16_t *srcp = reinterpret_cast <const uint16_t*> (vsapi->getReadPtr(srcPF, b));
+            const int spitch = (vsapi->getStride(srcPF, b)/2);
             const int width = vsapi->getFrameWidth(dst, b) + 24;
             const int height = vsapi->getFrameHeight(dst, b) + 8;
-            uint8_t *dstp = vsapi->getWritePtr(dst, b);
-            const int dpitch = vsapi->getStride(dst, b);
+            uint16_t *dstp = reinterpret_cast <uint16_t *> (vsapi->getWritePtr(dst, b));
+            const int dpitch = (vsapi->getStride(dst, b)/2);
             vs_bitblt(dstp + (1 - field_n)*dpitch, dpitch * 2,
                       srcp + (4 + 1 - field_n)*spitch + 12, spitch * 2,
                       width - 24,
@@ -550,28 +550,28 @@ static const VSFrameRef *VS_CC eedi3GetFrame(int n, int activationReason, void *
 
             if(d->vcheck > 0) {
                 int *dstpd = dmapa;
-                const uint8_t *scpp = NULL;
+                const uint16_t *scpp = NULL;
                 int scpitch = 0;
 
                 if(d->sclip) {
-                    scpitch = vsapi->getStride(scpPF, b);
-                    scpp = vsapi->getReadPtr(scpPF, b) + field_n * scpitch;
+                    scpitch = (vsapi->getStride(scpPF, b)/2);
+                    scpp = reinterpret_cast <const uint16_t *> (vsapi->getReadPtr(scpPF, b) + field_n * scpitch);
                 }
 
                 for(y = 4 + field_n; y < height - 4; y += 2) {
                     if(y >= 6 && y < height - 6) {
-                        const uint8_t *dst3p = srcp - 3 * spitch + 12;
-                        const uint8_t *dst2p = dstp - 2 * dpitch;
-                        const uint8_t *dst1p = dstp - 1 * dpitch;
-                        const uint8_t *dst1n = dstp + 1 * dpitch;
-                        const uint8_t *dst2n = dstp + 2 * dpitch;
-                        const uint8_t *dst3n = srcp + 3 * spitch + 12;
-                        uint8_t *tline = (uint8_t *)workspace;
+                        const uint16_t *dst3p = srcp - 3 * spitch + 12;
+                        const uint16_t *dst2p = dstp - 2 * dpitch;
+                        const uint16_t *dst1p = dstp - 1 * dpitch;
+                        const uint16_t *dst1n = dstp + 1 * dpitch;
+                        const uint16_t *dst2n = dstp + 2 * dpitch;
+                        const uint16_t *dst3n = srcp + 3 * spitch + 12;
+                        uint16_t *tline = (uint16_t *)workspace;
 
                         for(x = 0; x < width - 24; ++x) {
                             const int dirc = dstpd[x];
                             const int cint = scpp ? scpp[x] :
-                                             VSMIN(VSMAX((36 * (dst1p[x] + dst1n[x]) - 4 * (dst3p[x] + dst3n[x]) + 32) >> 6, 0), 255);
+                                             VSMIN(VSMAX((36 * (dst1p[x] + dst1n[x]) - 4 * (dst3p[x] + dst3n[x]) + 32) >> 6, 0), 65535);
 
                             if(dirc == 0) {
                                 tline[x] = cint;
@@ -772,11 +772,6 @@ static void VS_CC eedi3Create(const VSMap *in, VSMap *out, void *userData, VSCor
 
     // goto or macro... macro or goto...
     char msg[80];
-
-    if(d.vi.format->bytesPerSample != 1) {
-        sprintf(msg, "eedi3:  only 8 bits per sample input supported");
-        goto error;
-    }
 
     if((d.vi.height & 1) && !d.dh) {
         sprintf(msg, "eedi3:  height must be mod 2 when dh=false!");
