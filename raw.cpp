@@ -432,13 +432,13 @@ static VSFrameRef *copyPad(const VSFrameRef *src, int fn, VSFrameContext *frameC
 
         for(y = off; y < 4; y += 2)
             vs_bitblt(dstp + y * dst_pitch, dst_pitch,
-                      dstp + (8 - y) * dst_pitch, dst_pitch, width, 1);
+                      dstp + (8 - y) * dst_pitch, dst_pitch, width*2, 1);
 
         int c = 2 + 2 * off;
 
         for(y = height - 4 + off; y < height; y += 2, c += 4)
             vs_bitblt(dstp + y * dst_pitch, dst_pitch,
-                      dstp + (y - c) * dst_pitch, dst_pitch, width, 1);
+                      dstp + (y - c) * dst_pitch, dst_pitch, width*2, 1);
     }
 
     return srcPF;
@@ -505,7 +505,7 @@ static const VSFrameRef *VS_CC eedi3GetFrame(int n, int activationReason, void *
         }
 
         int *dmapa = NULL;
-        VS_ALIGNED_MALLOC((void **)&dmapa, (vsapi->getStride(dst, 0)/2)*vsapi->getFrameHeight(dst, 0)*sizeof(int), 16);
+        VS_ALIGNED_MALLOC((void **)&dmapa, (vsapi->getStride(dst, 0)/2)*vsapi->getFrameHeight(dst, 0)*sizeof(int32_t), 16);
         if (!dmapa) {
             VS_ALIGNED_FREE(workspace);
             vsapi->setFilterError("EEDI3: Memory allocation failed", frameCtx);
@@ -529,7 +529,7 @@ static const VSFrameRef *VS_CC eedi3GetFrame(int n, int activationReason, void *
             const int dpitch = (vsapi->getStride(dst, b)/2);
             vs_bitblt(dstp + (1 - field_n)*dpitch, dpitch * 2,
                       srcp + (4 + 1 - field_n)*spitch + 12, spitch * 2,
-                      width - 24,
+                      (width - 24)*2,
                       (height - 8) >> 1);
             srcp += (4 + field_n) * spitch;
             dstp += field_n * dpitch;
@@ -637,7 +637,7 @@ static const VSFrameRef *VS_CC eedi3GetFrame(int n, int activationReason, void *
                             tline[x] = (int)((1.0 - a) * dstp[x] + a * cint);
                         }
 
-                        memcpy(dstp, tline, width - 24);
+                        memcpy(dstp, tline, (width - 24) * 2);
                     }
 
                     srcp += 2 * spitch;
